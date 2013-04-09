@@ -1,12 +1,16 @@
 require 'uri'
 require 'set'
+require 'zlib'
 
 class Clann
-  attr_reader :triple_set
+  attr_reader :triple_set, :clans, :properties_index
 
-  def initialize(filename)
+  def initialize(filename, index_output_name, clan_output_name)
     @triple_set = File.open(filename, 'r')
     @triple_set_filename = filename
+
+    @index_output_filename = index_output_name
+    @clan_output_filename = clan_output_name
   end
 
   def self.isDBpediaURI?(uri)
@@ -54,7 +58,7 @@ class Clann
   end
 
   def clusterize_triples
-    clans = {}
+    @clans = {}
 
     print "Clearing out inactive RAM memory...\r"
     free_the_fish
@@ -67,7 +71,7 @@ class Clann
     line = 0
     triple_set.readline
 
-    @properties_index = Set.new    
+    @properties_index = Set.new
 
     triple_set.each_line do |t|
       triple = process_triple(t)
@@ -75,10 +79,10 @@ class Clann
 
       if triple
         unless @properties_index.include? triple.first
-          clans[triple.first] = [triple.last]
+          @clans[triple.first] = [triple.last]
           @properties_index.add triple.first
         else
-          clans[triple.first].push(triple.last)
+          @clans[triple.first].push(triple.last)
         end
       end
 
@@ -87,6 +91,43 @@ class Clann
       end
     end
 
-    return clans
+    puts "\nDone."
+  end
+
+  def store_clusters
+    index_marshal_dump = Marshal.dump(@properties_index)
+    clans_marshal_dump = Marshal.dump(@clans)
+
+    output_index = File.new(@index_output_filename, 'w')
+    output_clans = File.new(@clan_output_filename, 'w')
+
+    output_index.write index_marshal_dump
+    output_clans.write clans_marshal_dump
+
+    output_index.close
+    output_clans.close
+  end
+
+  def load(filename)
+    unless File.exists?(filename)
+      return false
+    end
+
+    begin
+      file = File.open(filename, 'r')
+      obj = Marshal.load file.read
+      file.close
+      return obj
+    rescue
+      return false
+    end
+  end
+
+  def load_indexes(filename)
+    return load(filename)
+  end
+
+  def load_clann(filename)
+    return load(filename)
   end
 end
