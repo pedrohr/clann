@@ -128,4 +128,14 @@ class Clann
   def load_clann(filename)
     return load(filename)
   end
+
+  def statistics_table
+    table = []
+
+    @clans.each_pair do |key, value|
+      table.push [key, value.size]
+    end
+
+    return table.sort {|x,y| y.last <=> x.last}
+  end
 end

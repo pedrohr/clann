@@ -76,4 +76,10 @@ class ClannTest < Test::Unit::TestCase
 
     File.delete(@output_clann, @output_index)
   end
+
+  def test_should_create_statistics_table
+    @clann.clusterize_triples
+    st = @clann.statistics_table
+    assert_equal(st, [['<http://dbpedia.org/ontology/mainInterest>', 4], ['<http://dbpedia.org/ontology/philosophicalSchool>', 2], ['<http://dbpedia.org/ontology/notableIdea>', 2], ['<http://dbpedia.org/ontology/author>', 1]])
+  end
 end
