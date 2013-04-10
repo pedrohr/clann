@@ -96,15 +96,13 @@ class Clann
 
   def store_clusters
     index_marshal_dump = Marshal.dump(@properties_index)
-    clans_marshal_dump = Marshal.dump(@clans)
-
     output_index = File.new(@index_output_filename, 'w')
-    output_clans = File.new(@clan_output_filename, 'w')
-
     output_index.write index_marshal_dump
-    output_clans.write clans_marshal_dump
-
     output_index.close
+
+    clans_marshal_dump = Marshal.dump(@clans)
+    output_clans = File.new(@clan_output_filename, 'w')
+    output_clans.write clans_marshal_dump
     output_clans.close
   end
 
