@@ -3,7 +3,7 @@ require 'set'
 require 'zlib'
 
 class Clann
-  attr_reader :triple_set, :clans, :properties_index
+  attr_reader :triple_set, :clans
 
   def initialize(filename, index_output_name, clan_output_name)
     @triple_set = File.open(filename, 'r')
@@ -41,7 +41,7 @@ class Clann
     unless Clann.isDBpediaURI?(o)
       return false
     else
-      return [p, [s,o]]
+      return {s => {o => p}}
     end
   end
 
@@ -71,18 +71,15 @@ class Clann
     line = 0
     triple_set.readline
 
-    @properties_index = Set.new
-
     triple_set.each_line do |t|
       triple = process_triple(t)
       line += 1
 
       if triple
-        unless @properties_index.include? triple.first
-          @clans[triple.first] = [triple.last]
-          @properties_index.add triple.first
+        if @clans[triple.keys.first].nil?
+          @clans.merge!(triple)
         else
-          @clans[triple.first].push(triple.last)
+          @clans[triple.keys.first].merge!(triple.values.first)
         end
       end
 
@@ -95,11 +92,6 @@ class Clann
   end
 
   def store_clusters
-    index_marshal_dump = Marshal.dump(@properties_index)
-    output_index = File.new(@index_output_filename, 'w')
-    output_index.write index_marshal_dump
-    output_index.close
-
     clans_marshal_dump = Marshal.dump(@clans)
     output_clans = File.new(@clan_output_filename, 'w')
     output_clans.write clans_marshal_dump
@@ -127,15 +119,5 @@ class Clann
 
   def load_clann(filename)
     return load(filename)
-  end
-
-  def statistics_table
-    table = []
-
-    @clans.each_pair do |key, value|
-      table.push [key, value.size]
-    end
-
-    return table.sort {|x,y| y.last <=> x.last}
   end
 end

@@ -35,7 +35,7 @@ class ClannTest < Test::Unit::TestCase
 
   def test_should_process_a_valid_triple
     data = @clann.process_triple(@valid_triple_example)
-    assert_equal(data, ['<http://dbpedia.org/ontology/author>', ['<http://dbpedia.org/resource/Animal_Farm>','<http://dbpedia.org/resource/George_Orwell>']])
+    assert_equal(data, {'<http://dbpedia.org/resource/Animal_Farm>' => {'<http://dbpedia.org/resource/George_Orwell>' => '<http://dbpedia.org/ontology/author>'}})
   end
 
   def test_should_ignored_invalid_triples
@@ -45,12 +45,10 @@ class ClannTest < Test::Unit::TestCase
 
   def test_should_clusterize_predicates
     @clann.clusterize_triples
-    assert_equal(@clann.clans, {'<http://dbpedia.org/ontology/author>' => [['<http://dbpedia.org/resource/Animal_Farm>', '<http://dbpedia.org/resource/George_Orwell>']],
-                   '<http://dbpedia.org/ontology/philosophicalSchool>' => [['<http://dbpedia.org/resource/Aristotle>', '<http://dbpedia.org/resource/Peripatetic_school>'], ['<http://dbpedia.org/resource/Aristotle>', '<http://dbpedia.org/resource/Aristotelianism>']],
-                   '<http://dbpedia.org/ontology/mainInterest>' => [['<http://dbpedia.org/resource/Aristotle>', '<http://dbpedia.org/resource/Physics>'], ['<http://dbpedia.org/resource/Aristotle>', '<http://dbpedia.org/resource/Metaphysics>'], ['<http://dbpedia.org/resource/Aristotle>', '<http://dbpedia.org/resource/Poetry>'], ['<http://dbpedia.org/resource/Aristotle>', '<http://dbpedia.org/resource/Politics>']],
-                   '<http://dbpedia.org/ontology/notableIdea>' => [['<http://dbpedia.org/resource/Aristotle>', '<http://dbpedia.org/resource/Reason>'], ['<http://dbpedia.org/resource/Aristotle>', '<http://dbpedia.org/resource/Logic>']]
+    assert_equal(@clann.clans, {
+                   '<http://dbpedia.org/resource/Animal_Farm>' => {'<http://dbpedia.org/resource/George_Orwell>' => '<http://dbpedia.org/ontology/author>'},
+                   '<http://dbpedia.org/resource/Aristotle>' => {'<http://dbpedia.org/resource/Peripatetic_school>' => '<http://dbpedia.org/ontology/philosophicalSchool>',  '<http://dbpedia.org/resource/Aristotelianism>' => '<http://dbpedia.org/ontology/philosophicalSchool>', '<http://dbpedia.org/resource/Physics>' => '<http://dbpedia.org/ontology/mainInterest>', '<http://dbpedia.org/resource/Metaphysics>' => '<http://dbpedia.org/ontology/mainInterest>', '<http://dbpedia.org/resource/Poetry>' => '<http://dbpedia.org/ontology/mainInterest>', '<http://dbpedia.org/resource/Politics>' => '<http://dbpedia.org/ontology/mainInterest>', '<http://dbpedia.org/resource/Reason>' => '<http://dbpedia.org/ontology/notableIdea>', '<http://dbpedia.org/resource/Logic>' => '<http://dbpedia.org/ontology/notableIdea>'}
                  })
-    assert_equal(@clann.properties_index, Set.new(['<http://dbpedia.org/ontology/author>', '<http://dbpedia.org/ontology/philosophicalSchool>', '<http://dbpedia.org/ontology/mainInterest>', '<http://dbpedia.org/ontology/notableIdea>']))
   end
 
   def test_should_count_triple_sets
@@ -66,20 +64,10 @@ class ClannTest < Test::Unit::TestCase
     @clann.clusterize_triples
     @clann.store_clusters
     assert(File.exists? @output_clann)
-    assert(File.exists? @output_index)
-
-    index = @clann.load_indexes(@output_index)
-    assert_equal(index, @clann.properties_index)
     
     clans = @clann.load_clann(@output_clann)
     assert_equal(clans, @clann.clans)
 
-    File.delete(@output_clann, @output_index)
-  end
-
-  def test_should_create_statistics_table
-    @clann.clusterize_triples
-    st = @clann.statistics_table
-    assert_equal(st, [['<http://dbpedia.org/ontology/mainInterest>', 4], ['<http://dbpedia.org/ontology/philosophicalSchool>', 2], ['<http://dbpedia.org/ontology/notableIdea>', 2], ['<http://dbpedia.org/ontology/author>', 1]])
+    File.delete(@output_clann)
   end
 end
