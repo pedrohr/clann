@@ -5,11 +5,10 @@ require 'zlib'
 class Clann
   attr_reader :triple_set, :clans
 
-  def initialize(filename, index_output_name, clan_output_name)
+  def initialize(filename, clan_output_name)
     @triple_set = File.open(filename, 'r')
     @triple_set_filename = filename
 
-    @index_output_filename = index_output_name
     @clan_output_filename = clan_output_name
   end
 
@@ -32,13 +31,18 @@ class Clann
     return true
   end
 
+  def _process_uri(uri)
+    uri = "/" + uri.strip.split("/").last
+    return uri[0..uri.size-2]
+  end
+
   def process_triple(triple)
     spo = triple.split(" ")
-    s = spo[0].strip
-    p = spo[1].strip
-    o = spo[2].strip
+    s = _process_uri(spo[0])
+    p = _process_uri(spo[1])
+    o = _process_uri(spo[2])
 
-    unless Clann.isDBpediaURI?(o)
+    unless Clann.isDBpediaURI?(spo[2])
       return false
     else
       return {s => {o => p}}
