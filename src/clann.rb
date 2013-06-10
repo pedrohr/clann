@@ -2,12 +2,16 @@ require 'uri'
 require 'set'
 require 'zlib'
 
-class Clann
-  attr_reader :triple_set, :clans
+load './src/classes.rb'
 
-  def initialize(filename, clan_output_name)
+class Clann
+  attr_reader :triple_set, :clans, :instance_classes
+
+  def initialize(filename, clan_output_name, classes_filename)
     @triple_set = File.open(filename, 'r')
     @triple_set_filename = filename
+
+    @instance_classes = File.open(classes_filename, 'r')
 
     @clan_output_filename = clan_output_name
   end
@@ -123,5 +127,47 @@ class Clann
 
   def load_clann(filename)
     return load(filename)
+  end
+
+  def filter_classes
+    filtered_classes = Hash.new()
+
+    # ignoring the first comment line
+    @instance_classes.readline
+
+    line = 0
+
+    @instance_classes.each_line do |l|
+      line += 1
+
+      l = l.split(" ")
+
+      if Clann.isDBpediaURI?(l[2])
+        instance = _process_uri(l[0])
+        type = _process_uri(l[2])
+
+        search = CLASSES[type[1..type.size-1]]
+
+        if filtered_classes[instance].nil?
+          if search.nil?
+            filtered_classes[instance] = "owl:Thing"
+            puts "nil detected for #{instance} and #{type}"
+          else
+            filtered_classes[instance] = type
+          end
+        else
+          unless search.nil?
+            current_type = filtered_classes[instance][1..filtered_classes[instance].size-1]
+            if not CLASSES[current_type].nil? and search > CLASSES[current_type] and search <= 3
+              filtered_classes[instance] = type
+            end
+          end
+        end
+
+        print "Processing line number #{line}...\r" if line % 1000 == 0
+      end
+    end
+
+    return filtered_classes
   end
 end

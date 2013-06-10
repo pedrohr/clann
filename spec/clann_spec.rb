@@ -11,10 +11,11 @@ end
 class ClannTest < Test::Unit::TestCase
   def setup
     @mapping_based = './spec/mock/mappingbased_properties_en.nt'
+    @instance_types = './spec/mock/instance_types_en.nt'
     @output_clann = './clanns.gz'
     @output_index = './indexes.gz'
     
-    @clann = Clann.new(@mapping_based, @output_clann)
+    @clann = Clann.new(@mapping_based, @output_clann, @instance_types)
 
     @invalid_triple_example = '<http://dbpedia.org/resource/Aristotle> <http://xmlns.com/foaf/0.1/name> ", Aristot\u00E9l\u0113s"@en .'
     @valid_triple_example = '<http://dbpedia.org/resource/Animal_Farm> <http://dbpedia.org/ontology/author> <http://dbpedia.org/resource/George_Orwell> .'
@@ -23,6 +24,11 @@ class ClannTest < Test::Unit::TestCase
   def test_should_open_triple_set_file
     file = File.open(@mapping_based, 'r')
     assert(File.identical?(@clann.triple_set, file))
+  end
+
+  def test_should_open_instance_types
+    file = File.open(@instance_types, 'r')
+    assert(File.identical?(@clann.instance_classes, file))
   end
 
   def test_should_detect_invalid_uri
@@ -69,5 +75,9 @@ class ClannTest < Test::Unit::TestCase
     assert_equal(clans, @clann.clans)
 
     File.delete(@output_clann)
+  end
+
+  def test_should_filter_acceptable_classes
+    assert_equal(@clann.filter_classes, {"/Autism" => "/Disease", "/Animal_Farm" => "/Book", "/Aristotle" => "/Philosopher"})
   end
 end
